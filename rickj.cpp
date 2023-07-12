@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cassert>
 #include <map>
+#include <unordered_map>
 using namespace std;
 
 // add a bunch of types {} ; [] to make Python --> C++ with the minimal amount of changes
@@ -24,6 +25,12 @@ class versionValue
 public:
     int version;
     int value;
+    versionValue()
+    {
+        version = value = 0;
+        return;
+    }
+
     versionValue(int v, int val)
     {
         version = v;
@@ -34,7 +41,7 @@ public:
 class FunkyHash
 {
 public:
-    map<string, versionValue> hash_table; // Just use a map to implement hash table
+    unordered_map<string, versionValue> hash_table; // Just use a map to implement hash table
     int put_version = 0;                  // version of hash table - each key has (value, put_version) stored. Older versions return last put_value set by putAll.
     int put_value = 0;                    // value to use for previous versions.
     FunkyHash()
@@ -53,11 +60,14 @@ public:
     {
         // Get value for key - return None if key not found.
 
-        if (hash_table.contains(key))
-            if (hash_table.get(key).version == self.put_version)
-                return hash_table.get(key).value;
+        if (hash_table.count(key))
+        {
+            versionValue vV = hash_table[key];
+            if (vV.version == put_version)
+                return vV.value;
             else
                 return put_value;
+        }
         else
             return -1;   // !!! Pick some invalid value to return if key not found - or throw exception
     }
@@ -74,7 +84,9 @@ public:
 
 void TestFunkyHash(void)
 {
-    h1 = FunkyHash();
+    FunkyHash h1;
+
+    h1.putAll(100);
 
     // Test set/get/putAll - interleave them a bit
     // Make sure values are updated correctly from putAll
